@@ -1,0 +1,3 @@
+- name: qwen_tool_agent
+  _target_: src.policy.agent_loop.dynamic_qwen_tool_agent_loop.DynamicQwenToolAgentLoop
+

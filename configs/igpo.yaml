@@ -1,0 +1,110 @@
+hydra:
+  searchpath:
+    # Use absolute path so Hydra can resolve trainer defaults when run from repo root
+    - file://${oc.env:ROOT_DIR}/verl/verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+data:
+  prompt_format: "hermes"
+  custom_cls:
+    path: "pkg://src.data.hotpot_local_dataset"
+    name: "HotpotLocalDataset"
+  train_files: "data/hotpotqa/local/queries.train.jsonl"
+  val_files: "data/hotpotqa/local/queries.val.jsonl"
+  train_batch_size: 32
+  val_batch_size: null
+  max_prompt_length: 2048
+  max_response_length: 4096
+  return_raw_chat: true
+  filter_overlong_prompts: true
+  truncation: error
+
+tools:
+  - class_name: "src.policy.tools.local_search.LocalEmbeddingSearchTool"
+    config:
+      type: native
+      retrieval_service_url: "http://127.0.0.1:8765/search"
+      topk_default: 3
+      timeout: 360
+      return_scores: true
+
+actor_rollout_ref:
+  model:
+    path: "models/Qwen3-4B"
+    use_remove_padding: true
+    enable_gradient_checkpointing: true
+  rollout:
+    name: sglang
+    prompt_length: ${oc.select:data.max_prompt_length}
+    response_length: ${oc.select:data.max_response_length}
+    log_prob_micro_batch_size_per_gpu: 8
+    tensor_model_parallel_size: 1
+    gpu_memory_utilization: 0.5
+    disable_log_stats: false
+    n: 8
+    val_kwargs:
+      temperature: 0.0
+      do_sample: false
+    multi_turn:
+      enable: true
+      format: hermes
+      max_assistant_turns: 4
+      max_parallel_calls: 512
+      max_tool_response_length: 4096
+      tool_config_path: "configs/local_search_igpo.yaml"
+      dynamic_prompt:
+        enable: false
+      custom_tooling:
+        enable: false
+    agent:
+      default_agent_loop: qwen_tool_agent
+      agent_loop_config_path: "configs/agent_loop/qwen_tool_agent_loop.yaml"
+      agent_loop_manager_class: "src.policy.agent_loop.qwen_agent_loop_manager.QwenAgentLoopManager"
+  ref:
+    log_prob_micro_batch_size_per_gpu: 8
+  actor:
+    use_kl_loss: false
+    entropy_coeff: 0
+    clip_ratio_low: 0.20
+    clip_ratio_high: 0.28
+    ppo_micro_batch_size_per_gpu: 2
+    ppo_mini_batch_size: 16
+    optim:
+      lr: 5e-6
+
+
+algorithm:
+  adv_estimator: grpo_igpo
+  compute_info_gain: true
+  info_gain_type: log_prob_diff
+  igpo:
+    gamma: 1.0
+    info_gain_norm_mode: separate
+    curriculum_f1_weight: 1.0
+    curriculum_ig_weight: 1.0
+
+reward_manager:
+  source: register
+  name: naive
+
+custom_reward_function:
+  path: "src/reward/igpo_info_gain.py"
+  name: igpo_compute_score
+
+
+trainer:
+  project_name: "local_search_grpo_igpo"
+  experiment_name: "qwen3-4b-hotpot-local-igpo"
+  max_actor_ckpt_to_keep: 100
+  val_before_train: false
+  n_gpus_per_node: 4
+  nnodes: 1
+  save_freq: 20
+  test_freq: 20
+  log_step_interval: 1
+  log_var_generations: 10
+  total_epochs: 1
+  logger: ["console","swanlab"]

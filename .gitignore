@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+*.whl
+data/
+models/
+checkpoints/
+logs/
+*.log
+.DS_Store

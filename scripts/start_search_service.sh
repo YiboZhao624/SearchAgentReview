@@ -1,0 +1,1 @@
+python -m src.policy.tools.embedding_search_service --index-path data/wiki/wiki-new/wiki-new.manifest.json --corpus-path data/wiki/wiki-new/wiki-new.jsonl --backend-url http://127.0.0.1:8000 --model Qwen3-Embedding-8B --timeout 240 --max-retries 2 --embed-batch-size 128 --batch-max-wait-ms 20 --batch-max-queries 512 --faiss-use-cpu --port 8765
