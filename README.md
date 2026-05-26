@@ -6,7 +6,7 @@ Code for the empirical review paper on search agent training methods. This repos
 
 | Method | Advantage Estimator | Key Idea |
 |--------|-------------------|----------|
-| **Search-R1** | Standard GRPO | Baseline: multi-turn search agent with EM/F1 reward |
+| **Search-R1** | Standard GRPO | Multi-turn search agent with EM reward |
 | **GiGPO** | `grpo_gigpo` | Discounted step-level returns + anchor observation grouping |
 | **IGPO** | `grpo_igpo` | Information-gain weighted advantage estimation |
 | **Tree-GRPO** | `tree_grpo` | Tree-structured rollouts with shared-prefix advantage |
@@ -21,14 +21,18 @@ Code for the empirical review paper on search agent training methods. This repos
 
 ### Installation
 
-```bash
-# Install verl framework
-cd verl
-pip install -e .
-cd ..
+We suggest installing VeRL package following the official guidance. For the search service, we suggest create two conda environment for VLLM embedding service and the Faiss Search service, respectively.
 
-# Install additional dependencies
-pip install faiss-cpu fastapi uvicorn nginx
+```
+conda create -n vllm11 python=3.12
+conda activate vllm11
+pip install vllm==0.11.0
+```
+
+```
+conda create -n faiss-gpu python=3.12
+conda activate faiss-gpu
+pip install faiss-gpu
 ```
 
 ### Data Preparation
@@ -39,7 +43,7 @@ Place your training data in the `data/` directory:
 
 Each line should be a JSON object with fields: `question`, `answer`, `supporting_facts` (optional).
 
-Use `src/data/multi_dataset_prep.py` to prepare multi-dataset mixtures from HotpotQA, 2WikiMultihopQA, MuSiQue, BamboOGLe, and PopQA.
+Use `src/data/multi_dataset_prep.py` to prepare multi-dataset mixtures from HotpotQA, 2WikiMultihopQA, MuSiQue, BamboogLe, and PopQA.
 
 ### Model
 
@@ -106,38 +110,6 @@ SearchAgentReview/
 │   │   └── tree_search/      # Tree-GRPO tree search logic
 │   └── reward/               # Reward functions (EM/F1, IGPO info-gain)
 └── verl/                     # Training framework (forked verl with method implementations)
-```
-
-## Key Implementation Details
-
-### verl Framework Extensions
-
-The `verl/` directory contains our fork with added advantage estimators:
-- `verl/verl/trainer/ppo/core_algos.py` — IGPO and Tree-GRPO advantage computation
-- `verl/verl/trainer/ppo/core_gigpo.py` — GiGPO advantage computation
-
-### Tool Definition
-
-All methods share the same search tool (`src/policy/tools/local_search.py`):
-- `LocalEmbeddingSearchTool`: Dense retrieval via FAISS + embedding model
-- Accepts `query_list` (list of queries) and `k` (top-k per query)
-- Returns ranked documents with `doc_id`, `title`, `text`
-
-### Agent Loop
-
-Multi-turn agent interaction is handled by:
-- `QwenToolAgentLoop`: Base loop with Qwen-style tool call parsing
-- `AsyncToolScoreQwenToolAgentLoop`: Extended loop for GiGPO (collects anchor observations)
-- `TreeSearchAgentLoopManager`: Tree-structured rollout manager for Tree-GRPO
-
-## Citation
-
-```bibtex
-@article{searchagentreview2026,
-  title={An Empirical Review of Search Agent Training Methods},
-  author={TODO},
-  year={2026}
-}
 ```
 
 ## License
