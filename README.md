@@ -15,7 +15,7 @@ Code for the empirical review paper on search agent training methods. This repos
 
 ### Prerequisites
 
-- 8× GPUs (A100/H100 recommended)
+- 16× GPUs (A100/H100 recommended), 8 for training and 8 for search service
 - Python 3.10+
 - CUDA 12.x
 
@@ -46,7 +46,9 @@ Each line should be a JSON object with fields: `question`, `answer`, `supporting
 
 If you want to sample the training/validation dataset by yourself, download these original datasets and use `src/data/multi_dataset_prep.py` to prepare multi-dataset mixtures from HotpotQA, 2WikiMultihopQA, MuSiQue, BamboogLe, and PopQA.
 
-For the corpus Wiki-Fixed, we cannot provide it without violating the double-blindness (as the file is too large to upload, and the huggingface link is unable to be anonymize.). We provide the pipeline to generate it here:
+For the corpus Wiki-Fixed, you can download it from [Wiki-fixed](https://huggingface.co/datasets/ybyby624/wiki-fixed). This version of Wiki-fixed is embedded with Qwen3-8B-Embedding, 4096 dimensions.
+
+We provide the pipeline to generate it here in case you want to use another embedding model:
 
 1. You need these raw dataset files under ./data/:                                                                                                                                                                                  
   - hotpotqa/train.json — HotpotQA train split                                                                                                                                                                                   
