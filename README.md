@@ -144,6 +144,7 @@ SearchAgentReview/
 │   ├── igpo.yaml
 │   ├── tree_grpo.yaml
 │   └── agent_loop/           # Agent loop definitions
+├── data/                     # train/val/test datasets
 ├── scripts/                  # Training & service scripts
 ├── src/
 │   ├── data/                 # Dataset classes & preparation
